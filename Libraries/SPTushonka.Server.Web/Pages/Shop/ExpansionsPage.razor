@@ -25,6 +25,7 @@
 <PageTitle>Expansion Hub</PageTitle>
 
 <CascadingValue Name="ShopLanguage" Value="_language">
+<CascadingValue Name="ShopSessionId" Value="_sessionId">
 <div class="shop-page">
     <div class="app-bg w-screen">
         <div class="parallax-wrapper">
@@ -94,6 +95,7 @@
                               Price="_confirmPrice"
                               Count="_confirmCount"
                               CanBuy="CanAfford(_confirmPrice, _confirmCount)"
+                              StashLimitExceeded="@(_confirmCount > TarcoinStoreService.GetMaxStashPurchaseCount(_sessionId, _confirming.OfferId.ToString()))"
                               Phase="_phase"
                               OnConfirm="BuyAsync"
                               OnCancel="() => _confirming = null"
@@ -102,6 +104,7 @@
                               OnAccepted="CompletePurchaseFlow"/>
     }
 </div>
+</CascadingValue>
 </CascadingValue>
 
 @code {

@@ -201,11 +201,11 @@
                     <div class="catalog-item-purchase__buy-row @(Block.Countable ? "pr-[40px]" : "px-[40px]")">
                         @if (Block.Countable && ShopFormat.IsTarcoinPriced(Block))
                         {
-                            <SCounter Value="Count" Max="999" ValueChanged="value => Count = value"/>
+                            <SCounter Value="Count" Max="Math.Max(1, Math.Min(999, MaxStashCount))" ValueChanged="value => Count = value"/>
                         }
                         <div class="purchase-single-button catalog-item-purchase__button">
                             <button class="button btn-grid-overlay @(free ? "button--purple" : "button--gold") button--md !w-full !h-full"
-                                    disabled="@(Price is null || !ShopFormat.IsTarcoinPriced(Block))"
+                                    disabled="@(Price is null || !ShopFormat.IsTarcoinPriced(Block) || Count > MaxStashCount)"
                                     @onclick="() => OnBuy.InvokeAsync(Count)">
                                 <span class="button__content">
                                     <span class="button__label">
@@ -219,6 +219,10 @@
                             </button>
                         </div>
                     </div>
+                    @if (Count > MaxStashCount)
+                    {
+                        <p role="status">This purchase would exceed the 80 extra stash-row limit.</p>
+                    }
                 }
                 </div>
             </div>
@@ -227,6 +231,11 @@
 </div>
 
 @code {
+    [CascadingParameter(Name = "ShopSessionId")]
+    public SPTarkov.Server.Core.Models.Common.MongoId SessionId { get; set; }
+
+    private int MaxStashCount => TarcoinStoreService.GetMaxStashPurchaseCount(SessionId, Block.OfferId.ToString());
+
     /// <summary>
     ///     Enable the carousel arrows, which depend on the rendered widths
     /// </summary>

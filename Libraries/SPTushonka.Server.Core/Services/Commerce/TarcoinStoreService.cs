@@ -244,7 +244,52 @@ public class TarcoinStoreService(
             : string.Empty;
     }
 
+    public const int MaximumPurchasedStashRows = 80;
+
+    private readonly ConcurrentDictionary<MongoId, SemaphoreSlim> _purchaseLocks = new();
+
+    public int GetMaxStashPurchaseCount(MongoId sessionId, string offerId)
+    {
+        var offer = GetOffer(offerId);
+        return offer is null || !saveServer.ProfileExists(sessionId)
+            ? 0
+            : GetMaxStashPurchaseCount(saveServer.GetProfile(sessionId), offer);
+    }
+
+    public int GetMaxStashPurchaseCount(SptProfile profile, ShopOffer offer)
+    {
+        var rows = CollectDeliverables(offer, out _, out _)
+            .Where(entry => entry.Type == ShopOfferItemType.StashRows)
+            .Sum(entry => (long)entry.RowsCount);
+        if (rows <= 0)
+        {
+            return int.MaxValue;
+        }
+
+        var remaining = Math.Max(0L, MaximumPurchasedStashRows - Math.Max(0L, profile.PurchasedShopStashRows ?? 0));
+        return (int)(remaining / rows);
+    }
+
     public async Task<ShopPurchaseReceipt> TryPurchaseAsync(
+        MongoId sessionId,
+        string offerId,
+        int count,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var gate = _purchaseLocks.GetOrAdd(sessionId, _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            return await PurchaseUnderLockAsync(sessionId, offerId, count, cancellationToken);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    private async Task<ShopPurchaseReceipt> PurchaseUnderLockAsync(
         MongoId sessionId,
         string offerId,
         int count,
@@ -283,6 +328,13 @@ public class TarcoinStoreService(
             logger.Warning($"TarCoin purchase refused, offer {offerId} has nothing this server can deliver");
 
             return new ShopPurchaseReceipt(ShopPurchaseOutcome.NotDeliverable);
+        }
+
+        // Validate the whole requested delivery before charging. Comparing quantities
+        // avoids overflowing a rows-times-count calculation on untrusted requests.
+        if (quantity > GetMaxStashPurchaseCount(sessionId, offerId))
+        {
+            return new ShopPurchaseReceipt(ShopPurchaseOutcome.PurchaseLimitExceeded);
         }
 
         if (!TrySpend(sessionId, price.AmountWithDiscount * quantity))
@@ -697,7 +749,13 @@ public class TarcoinStoreService(
             return false;
         }
 
-        var (purchased, available) = GetStock(saveServer.GetProfile(sessionId), offer);
+        var profile = saveServer.GetProfile(sessionId);
+        if (profile.PurchasedShopOffers?.Contains(offer.Id.ToString()) == true)
+        {
+            return true;
+        }
+
+        var (purchased, available) = GetStock(profile, offer);
 
         return available == 0 && purchased > 0;
     }
@@ -744,6 +802,13 @@ public class TarcoinStoreService(
     /// <returns>True when owned</returns>
     private static bool OwnsUnit(SptProfile? profile, ShopOffer unit)
     {
+        // Repeatable packs are consumed, not permanent ownership of every bundle
+        // containing that pack. The exact non-countable bundle is tracked separately.
+        if (unit.Countable)
+        {
+            return false;
+        }
+
         if (profile?.PurchasedShopOffers?.Contains(unit.Id.ToString()) ?? false)
         {
             return true;

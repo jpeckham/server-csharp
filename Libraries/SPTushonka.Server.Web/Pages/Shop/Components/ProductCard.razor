@@ -120,7 +120,8 @@
             {
                 <div class="purchase-single-button purchase-showcase-button !w-[120px]">
                     <button class="button btn-grid-overlay button--gold button--md !w-full !h-full"
-                            disabled="@(Price is null)"
+                            disabled="@(Price is null || StashLimitExceeded)"
+                            title="@(StashLimitExceeded ? "This purchase would exceed the 80 extra stash-row limit." : null)"
                             @onclick="() => OnBuy.InvokeAsync(Block.OfferId.ToString())">
                         <span class="button__content">
                             <span class="button__label">
@@ -147,6 +148,11 @@
 </article>
 
 @code {
+    [CascadingParameter(Name = "ShopSessionId")]
+    public SPTarkov.Server.Core.Models.Common.MongoId SessionId { get; set; }
+
+    private bool StashLimitExceeded => TarcoinStoreService.GetMaxStashPurchaseCount(SessionId, Block.OfferId.ToString()) < 1;
+
     [CascadingParameter(Name = "ShopLanguage")]
     public string Language { get; set; } = "en";
 

@@ -87,8 +87,8 @@
 
                     <div class="purchase-confirm__actions">
                         <button class="btn btn--primary btn--size--lg min-w-[220px] @(CanBuy ? null : "btn--disabled")"
-                                disabled="@(!CanBuy)"
-                                title="@(CanBuy ? null : "Not enough TarCoins")"
+                                disabled="@(!CanBuy || StashLimitExceeded)"
+                                title="@(StashLimitExceeded ? "This purchase would exceed the 80 extra stash-row limit." : CanBuy ? null : "Not enough TarCoins")"
                                 @onclick="() => OnConfirm.InvokeAsync(Block.OfferId.ToString())">
                             <span class="btn-text">@TarcoinStoreService.Localise("features.purchase.buttons.buy", Language)</span>
                             <div class="texture btn-texture" style="background-image: url(/files/shop/ExpansionsHub_MainButton_220_Background_2.png);"></div>
@@ -106,6 +106,9 @@
 </div>
 
 @code {
+    [Parameter]
+    public bool StashLimitExceeded { get; set; }
+
     [CascadingParameter(Name = "ShopLanguage")]
     public string Language { get; set; } = "en";
 

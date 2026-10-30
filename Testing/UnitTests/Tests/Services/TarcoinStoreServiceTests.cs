@@ -55,6 +55,29 @@ public class TarcoinStoreServiceTests
         Assert.That(_service.GetOffer("69c504e2f785a1a63dd307ee")!.Items.Single().RowsCount, Is.EqualTo(4));
     }
 
+    [TestCase(0, "6a2a879b62d8a4e121a50a86", 1)]
+    [TestCase(2, "6a2a879b62d8a4e121a50a86", 0)]
+    [TestCase(40, "69c5121e0709f5c2b37f6a65", 1)]
+    [TestCase(42, "69c5121e0709f5c2b37f6a65", 0)]
+    [TestCase(78, "6a46981da1132c0a632db21c", 1)]
+    [TestCase(22, "6a46981da1132c0a632db21c", 29)]
+    [TestCase(80, "6a46981da1132c0a632db21c", 0)]
+    [TestCase(82, "6a46981da1132c0a632db21c", 0)]
+    [TestCase(int.MaxValue, "6a46981da1132c0a632db21c", 0)]
+    [TestCase(80, UsecDayOffBundle, int.MaxValue)]
+    public void GetMaxStashPurchaseCount_RespectsRemainingRows(int purchased, string offerId, int expected)
+    {
+        Assert.That(_service.GetMaxStashPurchaseCount(new SptProfile { PurchasedShopStashRows = purchased },
+            _service.GetOffer(offerId)!), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void GetStock_StashPackBoughtInAnotherBundle_DoesNotOwnAllBundles()
+    {
+        var profile = new SptProfile { PurchasedShopOffers = ["69c511e281e467e8b07f2d4a", "69c504e2f785a1a63dd307ee"] };
+        Assert.That(_service.GetStock(profile, _service.GetOffer("6a2a879b62d8a4e121a50a86")!), Is.EqualTo((0, 1)));
+    }
+
     // The upper lists the bundles it is sold in as related offers
     [Test]
     public void CollectDeliverables_SingleOffer_IgnoresLinkedBundles()
