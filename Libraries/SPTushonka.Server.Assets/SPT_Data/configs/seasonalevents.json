@@ -1,7 +1,7 @@
 {
   "botAppearanceChanges": {
     "CHRISTMAS": {
-      "bear": {
+      "pmcbear": {
         "body": {
           "67599500a378f89a3e089b56": 10
         },
@@ -9,7 +9,7 @@
           "675994c9f7adb892bd080766": 10
         }
       },
-      "usec": {
+      "pmcusec": {
         "body": {
           "675fd6897a57e0b2a00e3405": 10
         },
@@ -9650,7 +9650,7 @@
   },
   "eventGear": {
     "christmas": {
-      "bear": {
+      "pmcbear": {
         "FaceCover": {
           "5c1a1e3f2e221602b66cc4c2": 30,
           "675ac888803644528007b3f6": 30
@@ -9819,7 +9819,7 @@
           "5c1a1e3f2e221602b66cc4c2": 5
         }
       },
-      "usec": {
+      "pmcusec": {
         "FaceCover": {
           "5c1a1e3f2e221602b66cc4c2": 30,
           "675ac888803644528007b3f6": 30
@@ -9848,7 +9848,7 @@
           "59ef13ca86f77445fd0e2483": 1500
         }
       },
-      "bear": {
+      "pmcbear": {
         "FaceCover": {
           "5bd06f5d86f77427101ad47c": 5,
           "5bd0716d86f774171822ef4b": 5,
@@ -9870,7 +9870,7 @@
           "63495c500c297e20065a08b1": 10
         }
       },
-      "usec": {
+      "pmcusec": {
         "FaceCover": {
           "5bd06f5d86f77427101ad47c": 5,
           "5bd0716d86f774171822ef4b": 5,

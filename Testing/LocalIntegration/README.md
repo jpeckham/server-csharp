@@ -1,4 +1,20 @@
-# Local shop integration checks
+# Local integration checks
+
+## Seasonal configuration regression
+
+`seasonal_config.py` is read-only and requires Python 3. It checks seasonal gear, loot and appearance bot references against the supplied database, including both PMC factions. Run from the repository root:
+
+```powershell
+python Testing/LocalIntegration/seasonal_config.py --data Libraries/SPTushonka.Server.Assets/SPT_Data
+# Also verify the installed data:
+python Testing/LocalIntegration/seasonal_config.py --data '<game>/SPT_Runtime/SPT_Data'
+```
+
+On 2026-10-30 the initial check failed on six obsolete `bear`/`usec` keys. Replacing them with `pmcbear`/`pmcusec` made both tests pass. This fixes the Halloween startup exception in SeasonalEventService.AddEventGearToBots and the same outdated references in Christmas gear/appearances. No service-code workaround or assembly replacement is required.
+
+The local 48484 installation then started with automatic seasonal detection enabled, logged `Event: Halloween is active`, and reached `Server has started, happy playing`. The 31 TarcoinStoreServiceTests also passed with detection enabled, without the previous test-output-only workaround. Those tests cover initialization and shop regressions, not Halloween raid gameplay or Christmas activation. Full gameplay needs player validation. Local backups/logs and owned-process orchestration are documented in the parent SPT-BE README.
+
+## Shop integration checks
 
 `stash_cap.py` preserves the real HTTP regression test used for the local SPT 5 / EFT 1.3.0.0.48484 shop fixes. The server is the owner of stash bundle grants/caps, so the test belongs here rather than in FreeTarcoins. FreeTarcoins supplies test currency only.
 
