@@ -568,6 +568,25 @@ public class TarcoinStoreService(
                     continue;
                 }
 
+                // Stash bundles list one four-row offer; their page tile carries
+                // the number of packs (5/10/15/20). This is not a multiplier for
+                // ordinary bundles, whose items already list their individual parts.
+                if (current.Items.Count == 1 && part.Items.Count == 1 && part.Items[0].Type == ShopOfferItemType.StashRows)
+                {
+                    var packCounts = shopTable.Content.Pages
+                        .SelectMany(page => page.Blocks)
+                        .Where(block => block.OfferId == current.Id && block.Type == "BUNDLE")
+                        .Select(block => block.ItemsCount)
+                        .Distinct()
+                        .ToList();
+
+                    if (packCounts.Count == 1 && packCounts[0] > 1)
+                    {
+                        // Clone both records: the child offer is also sold on its own.
+                        part = part with { Items = [part.Items[0] with { RowsCount = checked(part.Items[0].RowsCount * packCounts[0]) }] };
+                    }
+                }
+
                 pending.Enqueue(part);
             }
         }

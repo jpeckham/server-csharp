@@ -37,6 +37,24 @@ public class TarcoinStoreServiceTests
         Assert.That(missing, Is.Empty);
     }
 
+    [TestCase("69c511e281e467e8b07f2d4a", 20)]
+    [TestCase("69c5121e0709f5c2b37f6a65", 40)]
+    [TestCase("69c512738bd3e988e7ee0089", 60)]
+    [TestCase("6a2a879b62d8a4e121a50a86", 80)]
+    [TestCase("69c504e2f785a1a63dd307ee", 4)]
+    [TestCase("6a46981da1132c0a632db21c", 2)]
+    public void CollectDeliverables_StashOffer_DeliversAdvertisedRowsWithoutMutatingCatalog(string offerId, int rows)
+    {
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var entries = _service.CollectDeliverables(_service.GetOffer(offerId)!, out _, out var missing);
+            Assert.That(missing, Is.Empty);
+            Assert.That(entries.Sum(entry => entry.RowsCount), Is.EqualTo(rows));
+        }
+
+        Assert.That(_service.GetOffer("69c504e2f785a1a63dd307ee")!.Items.Single().RowsCount, Is.EqualTo(4));
+    }
+
     // The upper lists the bundles it is sold in as related offers
     [Test]
     public void CollectDeliverables_SingleOffer_IgnoresLinkedBundles()
